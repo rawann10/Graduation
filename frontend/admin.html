@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard — LawGic</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#55A6A0',
+                        navy: '#2D4A77',
+                        'background-light': '#F8FAFC',
+                        'background-dark': '#0F172A',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .page-bg {
+            background: linear-gradient(165deg, #f1f5f9 0%, #e2e8f0 45%, #f8fafc 100%);
+        }
+        .dark .page-bg {
+            background: linear-gradient(165deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .sidebar-active {
+            @apply bg-primary/10 dark:bg-primary/20 border-l-4 border-primary text-primary;
+        }
+        .table-row-hover:hover {
+            @apply bg-slate-50 dark:bg-slate-800/50 transition-colors;
+        }
+        .status-badge {
+            @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+        }
+    </style>
+</head>
+<body class="page-bg text-slate-900 dark:text-slate-100 min-h-screen antialiased transition-colors">
+    <!-- Header -->
+    <header class="border-b border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl sticky top-0 z-40">
+        <div class="px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <a href="app.html" class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-navy to-primary text-amber-400 shadow-md">
+                    <span class="material-icons-round">arrow_back</span>
+                </a>
+                <div>
+                    <h1 class="text-lg font-bold text-navy dark:text-white">Admin Dashboard</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">LawGic Control Panel</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="userEmail" class="text-xs sm:text-sm text-slate-600 dark:text-slate-400"></span>
+                <button type="button" id="themeToggle" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <span class="material-icons-round text-xl" id="themeIcon">dark_mode</span>
+                </button>
+                <button type="button" id="logoutBtn" class="p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                    <span class="material-icons-round">logout</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-col md:flex-row min-h-[calc(100vh-70px)]">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/30">
+            <nav class="p-4 space-y-2">
+                <button class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors sidebar-active" data-page="dashboard">
+                    <span class="material-icons-round">dashboard</span>
+                    <span class="font-medium">Dashboard</span>
+                </button>
+                <button class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-800" data-page="users">
+                    <span class="material-icons-round">group</span>
+                    <span class="font-medium">Users</span>
+                </button>
+                <button class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-800" data-page="documents">
+                    <span class="material-icons-round">description</span>
+                    <span class="font-medium">Documents</span>
+                </button>
+                <button class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-800" data-page="results">
+                    <span class="material-icons-round">analytics</span>
+                    <span class="font-medium">AI Results</span>
+                </button>
+                <button class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-800" data-page="settings">
+                    <span class="material-icons-round">settings</span>
+                    <span class="font-medium">Settings</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <!-- Loading State -->
+            <div id="loadingState" class="flex flex-col items-center justify-center h-full gap-4 p-4">
+                <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-sm text-slate-500">Loading dashboard...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden flex flex-col items-center justify-center h-full gap-4 p-4">
+                <span class="material-icons-round text-5xl text-red-400">error</span>
+                <p class="text-red-600 dark:text-red-400 font-medium" id="errorMessage">Something went wrong</p>
+                <a href="app.html" class="inline-flex items-center gap-2 mt-6 text-primary font-semibold hover:underline">Return to analyzer</a>
+            </div>
+
+            <!-- Content Container -->
+            <div id="contentContainer" class="hidden p-4 sm:p-6 space-y-6">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page-content space-y-6">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                            <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm mb-3">
+                                <span class="material-icons-round text-primary">group</span>
+                                Total Users
+                            </div>
+                            <p id="statTotalUsers" class="text-3xl font-bold text-navy dark:text-white">0</p>
+                        </div>
+                        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                            <div class="flex items-center gap-3 text-amber-700 dark:text-amber-400 text-sm mb-3">
+                                <span class="material-icons-round">admin_panel_settings</span>
+                                Admins
+                            </div>
+                            <p id="statAdminUsers" class="text-3xl font-bold text-navy dark:text-white">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                        <h3 class="text-lg font-bold text-navy dark:text-white mb-4">Recent Activity</h3>
+                        <div id="recentActivityList" class="space-y-3">
+                            <p class="text-sm text-slate-500">Loading activity...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Page -->
+                <div id="usersPage" class="page-content hidden space-y-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold text-navy dark:text-white mb-2">User Management</h2>
+                            <p class="text-slate-600 dark:text-slate-400">View and manage all registered users</p>
+                        </div>
+                        <button onclick="addNewUser()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">+ Add User</button>
+                    </div>
+                    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Role</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Joined</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTable">
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 table-row-hover">
+                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-slate-500">Loading users...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Page -->
+                <div id="documentsPage" class="page-content hidden space-y-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold text-navy dark:text-white mb-2">Document Management</h2>
+                            <p class="text-slate-600 dark:text-slate-400">Track all uploaded documents and their analysis status</p>
+                        </div>
+                        <button onclick="addNewDocument()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">+ Add Document</button>
+                    </div>
+                    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Document</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Upload Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Uploaded By</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentsTable">
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 table-row-hover">
+                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-slate-500">No documents yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Results Page -->
+                <div id="resultsPage" class="page-content hidden space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-navy dark:text-white mb-2">AI Analysis Results</h2>
+                        <p class="text-slate-600 dark:text-slate-400">View extracted clauses and risk assessments</p>
+                    </div>
+                    <div id="resultsContainer" class="space-y-6">
+                        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 text-center">
+                            <p class="text-slate-500">No AI results available yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="settingsPage" class="page-content hidden space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-navy dark:text-white mb-2">Settings</h2>
+                        <p class="text-slate-600 dark:text-slate-400">Manage system configuration</p>
+                    </div>
+                    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6">
+                        <h3 class="font-semibold text-navy dark:text-white mb-4">System Status</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-600 dark:text-slate-400">API Status</span>
+                                <span class="status-badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                    <span class="inline-block w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full mr-2"></span>
+                                    Operational
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-600 dark:text-slate-400">Database</span>
+                                <span class="status-badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                    <span class="inline-block w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full mr-2"></span>
+                                    Connected
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-400">AI Pipeline</span>
+                                <span class="status-badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                    <span class="inline-block w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full mr-2"></span>
+                                    Ready
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- USER FORM MODAL -->
+    <div id="userFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 id="userFormTitle" class="text-2xl font-bold text-navy dark:text-white mb-4">Add New User</h2>
+            
+            <form id="userForm" onsubmit="submitUserForm(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        First Name <span class="text-red-600">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="userFormFirstName" 
+                        required 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                        placeholder="John"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Last Name <span class="text-red-600">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="userFormLastName" 
+                        required 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                        placeholder="Doe"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Email <span class="text-red-600">*</span>
+                    </label>
+                    <input 
+                        type="email" 
+                        id="userFormEmail" 
+                        required 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                        placeholder="john@example.com"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Password <span id="userPasswordRequired" class="text-red-600">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="userFormPassword" 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                        placeholder="Minimum 8 characters"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Role <span class="text-red-600">*</span>
+                    </label>
+                    <select 
+                        id="userFormRole" 
+                        required 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                    >
+                        <option value="user">👤 Regular User</option>
+                        <option value="admin">👑 Admin</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button 
+                        type="button" 
+                        onclick="closeUserModal()" 
+                        class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                        Save User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DOCUMENT FORM MODAL -->
+    <div id="documentFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 id="documentFormTitle" class="text-2xl font-bold text-navy dark:text-white mb-4">Add New Document</h2>
+            
+            <form id="documentForm" onsubmit="submitDocumentForm(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Document Filename <span class="text-red-600">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="documentFormFilename" 
+                        required 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                        placeholder="contract.pdf"
+                    />
+                </div>
+
+                <div id="documentStatusGroup" class="hidden">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Status
+                    </label>
+                    <select 
+                        id="documentFormStatus" 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+                    >
+                        <option value="pending">⏳ Pending</option>
+                        <option value="analyzing">🔄 Analyzing</option>
+                        <option value="analyzed">✅ Analyzed</option>
+                        <option value="error">❌ Error</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button 
+                        type="button" 
+                        onclick="closeDocumentModal()" 
+                        class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                        Save Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
+

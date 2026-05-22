@@ -1,0 +1,17 @@
+node_modules/
+.env
+.DS_Store
+dist/
+build/
+*.log
+
+# SQLite WAL/SHM temp files
+*.db-shm
+*.db-wal
+
+# Uploaded contract files (user data)
+backend/uploads/
+
+# Google Cloud service account key (never commit secrets)
+gcp-key.json
+backend/chroma_data/

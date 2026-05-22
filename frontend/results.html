@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Analysis Results - LawGic</title>
+    
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#55A6A0", 
+                        navy: "#2D4A77",    
+                        "background-light": "#F8FAFC",
+                        "background-dark": "#0F172A",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        arabic: ["Cairo", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        [data-lang="ar"] body { font-family: 'Cairo', sans-serif; direction: rtl; }
+        .hero-gradient { background: linear-gradient(135deg, #2D4A77 0%, #55A6A0 100%); }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Language-specific hiding */
+        [data-lang="en"] .ar-only { display: none; }
+        [data-lang="ar"] .en-only { display: none; }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+
+    <header class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='app.html'">
+                    <span class="material-icons-round text-amber-500 text-3xl">balance</span>
+                    <span class="text-2xl font-bold text-navy dark:text-white">LawGic</span>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="app.html" class="text-sm font-medium hover:text-primary transition-colors" data-translate="nav-home">Home</a>
+                    
+                    <button onclick="window.location.href='app.html'" class="border border-navy dark:border-slate-500 text-navy dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" data-translate="nav-new">
+                        New Analysis
+                    </button>
+                    
+                    <!-- Language Toggle -->
+                    <button onclick="toggleLanguage()" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1 px-3">
+                        <span class="material-icons-round text-sm">translate</span>
+                        <span class="text-xs font-medium en-only">AR</span>
+                        <span class="text-xs font-medium ar-only">EN</span>
+                    </button>
+                    
+                    <button class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick="toggleTheme()" aria-label="Toggle dark mode">
+                        <span class="material-icons-round" id="themeIcon">dark_mode</span>
+                    </button>
+                </div>
+
+                <button class="md:hidden p-2 text-navy dark:text-white" onclick="toggleMobileMenu()">
+                    <span class="material-icons-round text-2xl">menu</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 shadow-lg">
+            <div class="flex flex-col space-y-4">
+                <a href="app.html" class="text-sm font-medium" onclick="toggleMobileMenu()" data-translate="nav-home">Home</a>
+                <button onclick="window.location.href='app.html'" class="text-left text-sm font-medium text-primary" data-translate="nav-new">New Analysis</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="results-section py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-navy dark:text-white mb-1" data-translate="results-title">Analysis Complete</h1>
+                    <p class="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="material-icons-round text-sm">description</span>
+                        <span id="documentName">Loading...</span>
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openQAModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all hover:-translate-y-0.5">
+                        <span class="material-icons-round">question_answer</span>
+                        <span data-translate="qa-btn">Ask Questions</span>
+                    </button>
+                    <button onclick="downloadReport()" class="bg-primary hover:bg-opacity-90 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary/30 flex items-center gap-2 transition-all hover:-translate-y-0.5">
+                        <span class="material-icons-round">download</span>
+                        <span data-translate="download-btn">Download</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <div id="overallRiskScore" class="w-full"></div>
+            </div>
+
+            <div id="resultsContainer" class="cards-container grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Cards will be dynamically added here based on selected options -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Q&A Modal -->
+    <div id="qaModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-navy dark:text-white flex items-center gap-2">
+                        <span class="material-icons-round text-blue-600">question_answer</span>
+                        <span data-translate="qa-title">Ask Questions About Your Contract</span>
+                    </h2>
+                    <button onclick="closeQAModal()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                        <span class="material-icons-round">close</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-3" data-translate="qa-subtitle">Try these questions:</p>
+                    <div id="qaSuggestions" class="grid grid-cols-1 gap-2"></div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" data-translate="qa-input-label">Your Question:</label>
+                    <div class="flex gap-2">
+                        <input
+                            type="text"
+                            id="questionInput"
+                            class="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent"
+                            onkeypress="if(event.key === 'Enter') askCustomQuestion()"
+                        />
+                        <button onclick="askCustomQuestion()" class="bg-primary hover:bg-opacity-90 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
+                            <span class="material-icons-round">send</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="qaResponse" class="hidden mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons-round text-blue-600 mt-1">assistant</span>
+                        <div class="flex-1">
+                            <p class="font-medium text-navy dark:text-white mb-1" data-translate="qa-answer">Answer:</p>
+                            <p id="qaAnswerText" class="text-slate-700 dark:text-slate-300"></p>
+                            <p class="text-xs text-slate-500 mt-2" id="qaConfidence"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="qaLoading" class="hidden mt-6 text-center">
+                    <div class="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-2" data-translate="qa-loading">Thinking...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="results-script.js"></script>
+</body>
+</html>
