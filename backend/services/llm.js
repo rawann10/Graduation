@@ -97,12 +97,19 @@ function buildSummaryContext(summary) {
 `;
 }
 
+// ── Law source filter map ─────────────────────────────────────────────────────
+const LAW_SOURCES = {
+    sport:      ['sports_law_171_2025'],
+    commercial: ['commercial_law_159_1981', 'commercial_law_95_1992']
+};
+
 // ── RAG retrieval — runs once, feeds all 6 prompts ────────────────────────────
 
-async function retrieveLaws(contractText) {
+async function retrieveLaws(contractText, contractType = null) {
     try {
-        const vec  = await embedOne(contractText.substring(0, 1000));
-        const hits = await search(vec, 10);
+        const vec        = await embedOne(contractText.substring(0, 1000));
+        const lawSources = contractType ? (LAW_SOURCES[contractType] || null) : null;
+        const hits       = await search(vec, 10, lawSources);
         console.log(`🔎 RAG: ChromaDB returned ${hits.length} hit(s)`);
         if (hits.length) {
             hits.forEach((h, i) =>
@@ -210,8 +217,9 @@ Do not assign High or Critical based on vague concern.
 SEVERITY RUBRIC — follow exactly:
 
 CRITICAL — assign ONLY when the clause:
-- Directly violates a mandatory article in Egyptian Civil Code
-  131/1948 making the contract void or voidable
+- Directly violates a mandatory provision in one of the
+  retrieved Egyptian law articles, making the contract void
+  or voidable
 - Exposes one party to criminal liability under Egyptian law
 - Contains a complete waiver of fundamental legal rights that
   Egyptian law does not permit waiving
@@ -219,8 +227,8 @@ CRITICAL — assign ONLY when the clause:
   basis
 
 HIGH — assign ONLY when the clause:
-- Contradicts Egyptian Civil Code 131/1948 or Commercial Law
-  17/1999 without making the contract void
+- Contradicts one of the retrieved Egyptian law articles
+  without making the contract void
 - Completely omits a legally required provision
 - Gives one party absolute unilateral power with zero legal
   recourse for the other party
@@ -318,23 +326,65 @@ Step 1: Read ONLY this specific clause. What does it
         literally say? Write it in your own words in
         one sentence.
 
-Step 2: What is the ONE thing that could specifically
-        go wrong with this clause AS WRITTEN? Think
-        about what is missing, what is one-sided, or
-        what gives one party too much power. Be specific
-        to this clause only.
+Step 2: Identify the clause TYPE, then answer the
+        matching questions below before continuing:
 
-Step 3: Have you already mentioned this same risk for
+  If this is a TERMINATION clause, ask yourself:
+  - Does the clause require prior written notice before
+    termination? If not, that is a risk.
+  - Do both parties have equal termination rights, or
+    can only one party terminate freely?
+  - Is there a grace period for the other party to
+    respond or remedy the situation?
+  - What happens to payments already made if the
+    contract is terminated early?
+
+  If this is a DISPUTE RESOLUTION clause, ask yourself:
+  - Which specific arbitration body or court is named?
+    If none is named, that is a risk.
+  - Does this clause prevent the member from going to
+    regular courts entirely?
+  - Is the arbitration location practical for both
+    parties, or only for one?
+  - Who bears the arbitration costs — is this specified?
+
+  If this is a RENEWAL clause, ask yourself:
+  - How many days notice is required for renewal or
+    non-renewal? If not stated, that is a risk.
+  - Can prices or terms change at renewal without
+    the other party's explicit consent?
+  - Is the renewal period the same as the original,
+    or can it change unilaterally?
+  - Does silence count as acceptance of renewal?
+
+  If this is a PAYMENT clause, ask yourself:
+  - Are the payment dates and amounts clearly specified?
+  - What is the penalty for late payment — is it capped?
+  - Is there a dispute mechanism if the amount is
+    contested?
+
+  If this is a CONFIDENTIALITY or NON-COMPETE clause,
+  ask yourself:
+  - Is the duration of the restriction clearly stated?
+  - Is the geographic or professional scope defined
+    narrowly enough to be enforceable?
+  - What is the actual penalty for breach?
+
+Step 3: What is the ONE thing that could specifically
+        go wrong with this clause AS WRITTEN based on
+        your answers above? Be specific to this clause.
+
+Step 4: Have you already mentioned this same risk for
         a previous clause? If yes, find a different
         angle for this clause. Every clause must have
         a UNIQUE risk explanation.
 
-Step 4: Does this clause directly mention a specific
+Step 5: Does this clause directly mention a specific
         money amount? If yes you may reference it.
         If no, do NOT mention any money amount at all
         even if you saw amounts in other clauses.
 
-Step 5: Now write your output using the rubric.
+Step 6: Now write your output using the rubric.
 ════════════════════════════════════════════════════════
 
 ════════════════════════════════════════════════════════
@@ -367,8 +417,9 @@ specific clause. Do not carry amounts over from other clauses.
 ════════════════════════════════════════════════════════
 
 Additional rules:
-- law_reference must cite the EXACT article number — never leave it empty
-- If no retrieved article applies, state the general Egyptian Civil Code principle
+- law_reference must cite ONLY an article that appears verbatim in <retrieved_egyptian_law_articles> above — copy the law name and article number exactly as written there
+- NEVER cite القانون المدني 131/1948 or any other law that does not appear in <retrieved_egyptian_law_articles> — not even if you know it from your training
+- If no retrieved article fits perfectly, pick the closest one from the list and explain the connection; do NOT invent or recall articles from outside the list
 - what_it_means: zero legal jargon — explain in plain Arabic as if to someone who never read a contract; do NOT use square brackets [ ] anywhere in your output — write naturally without brackets
 - why_its_risky: a real specific scenario with real consequences and real numbers if present in THAT SPECIFIC clause only
 - what_to_do: specific text suggestions — not vague advice
@@ -387,7 +438,7 @@ Return ONLY valid JSON, no text outside it, no backticks:
       "what_it_means": "2-3 جمل عربية بسيطة تشرح ما يقوله هذا البند كأنك تشرح لشخص لم يقرأ عقداً من قبل",
       "why_its_risky": "1-2 جملتان عربيتان تشرحان الضرر المحدد مع ذكر المبالغ أو الحقوق المفقودة إن وُجدت",
       "what_to_do": "2-3 خطوات عملية محددة باللغة العربية مع اقتراح نص التعديل",
-      "law_reference": "مثال: المادة 147 من القانون المدني 131/1948"
+      "law_reference": "اسم القانون ورقم المادة حرفياً كما ورد في retrieved_egyptian_law_articles"
     }
   ]
 }`;
@@ -410,10 +461,11 @@ ${laws}
 
 تعليمات صارمة:
 1. يجب أن تستشهد بمادة قانونية من <relevant_laws> لكل بند — لا تترك حقلي law_name أو article_number فارغَين أبداً.
-2. اقتبس اسم القانون ورقم المادة حرفياً كما ورد في <relevant_laws>.
+2. اقتبس اسم القانون ورقم المادة حرفياً كما ورد في <relevant_laws> — لا تغيّر أي حرف.
 3. إذا انطبقت أكثر من مادة على بند واحد، أدرج سجلاً منفصلاً لكل مادة.
-4. إذا كانت المواد المسترجعة لا تنطبق تماماً على بند ما، اذكر أقرب مادة مع توضيح وجه الصلة في حقل relevance.
+4. إذا كانت المواد المسترجعة لا تنطبق تماماً على بند ما، اذكر أقرب مادة من القائمة أعلاه مع توضيح وجه الصلة في حقل relevance.
 5. لا تكتب "لا يوجد مرجع قانوني محدد" — هذه الإجابة غير مقبولة. اختر دائماً الأقرب من المواد المتاحة.
+6. محظور تماماً: لا تستشهد بأي مادة من القانون المدني 131/1948 أو أي قانون آخر غير موجود في <relevant_laws> — حتى لو كنت تعرفها من تدريبك.
 
 أعد JSON فقط بدون أي نص خارجه أو backticks:
 {
@@ -503,8 +555,9 @@ async function analyzeLegalTerms(fullText, summary) {
 async function answerWithRAG(question, context) {
     let lawContext = 'غير متوفر';
     try {
-        const queryVec = await embedOne(question);
-        const hits = await search(queryVec, 5);
+        const queryVec   = await embedOne(question);
+        const lawSources = context.contractType ? (LAW_SOURCES[context.contractType] || null) : null;
+        const hits       = await search(queryVec, 5, lawSources);
         if (hits.length) {
             lawContext = hits.map((h, i) =>
                 `[${i + 1}] ${h.law_name_ar || ''} — المادة ${h.article_number}\n${(h.content || '').substring(0, 350)}`

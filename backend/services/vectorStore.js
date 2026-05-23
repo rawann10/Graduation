@@ -36,12 +36,14 @@ async function upsertLaws(items) {
  * Semantic search over law articles.
  * @param {number[]} queryVector — normalised query embedding
  * @param {number}   topK
+ * @param {string[]|null} lawSources — restrict results to these law_source values
  * @returns {Promise<Array<object & {score: number}>>}
  */
-async function search(queryVector, topK = 5) {
+async function search(queryVector, topK = 5, lawSources = null) {
     try {
         const col    = await getCollection({ name: COLLECTION });
-        const result = await col.query({ queryEmbeddings: [queryVector], nResults: topK });
+        const where  = lawSources ? { law_source: lawSources } : null;
+        const result = await col.query({ queryEmbeddings: [queryVector], nResults: topK, where });
 
         const metas     = result.metadatas[0]  || [];
         const distances = result.distances[0]  || [];

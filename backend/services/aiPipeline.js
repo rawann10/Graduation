@@ -69,9 +69,10 @@ class LawGicAIPipeline {
         }
         console.log('✅ Contract validation passed');
 
-        // STAGE 2: RAG — retrieve relevant laws once for all features
-        console.log('🔎 Retrieving relevant law articles...');
-        const laws = await retrieveLaws(fullText);
+        // STAGE 2: RAG — retrieve relevant laws once for all features (filtered by contract type)
+        const contractType = options.contractType || null;
+        console.log(`🔎 Retrieving relevant law articles (type: ${contractType || 'all'})...`);
+        const laws = await retrieveLaws(fullText, contractType);
         console.log('✅ Laws retrieved');
 
         // STAGE 3: Summary first — becomes shared context for all remaining features

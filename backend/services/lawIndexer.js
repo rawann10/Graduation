@@ -69,7 +69,7 @@ function extractArticles(dataset, idOffset) {
             if (!content) return null;
 
             const articleNumber = String(
-                a.unique_id ?? a.article_number ?? a.number ?? a.id ?? i + 1
+                a.article_number ?? a.number ?? a.unique_id ?? a.id ?? i + 1
             );
             const title = a.title || a.law_title_ar || `المادة ${articleNumber}`;
 

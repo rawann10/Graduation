@@ -62,7 +62,7 @@ function extractArticles(dataset, idOffset, lawSource) {
             const content = String(a.content || a.law_text_ar || '').trim();
             if (!content) return null;
 
-            const articleNumber = String(a.unique_id ?? a.article_number ?? a.number ?? a.id ?? i + 1);
+            const articleNumber = String(a.article_number ?? a.number ?? a.unique_id ?? a.id ?? i + 1);
             const title = a.title || a.law_title_ar || `المادة ${articleNumber}`;
 
             return {

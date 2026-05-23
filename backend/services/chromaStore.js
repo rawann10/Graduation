@@ -102,13 +102,18 @@ class Collection {
 
     /**
      * Nearest-neighbour search using cosine similarity.
-     * @param {{ queryEmbeddings: number[][], nResults?: number }} opts
+     * @param {{ queryEmbeddings: number[][], nResults?: number, where?: { law_source?: string|string[] } }} opts
      * @returns ChromaDB-shaped result: { ids, distances, metadatas }
      */
-    async query({ queryEmbeddings, nResults = 5 }) {
-        const rows = db()
+    async query({ queryEmbeddings, nResults = 5, where = null }) {
+        let rows = db()
             .prepare('SELECT id, embedding, metadata FROM vectors WHERE collection = ?')
             .all(this.name);
+
+        if (where && where.law_source) {
+            const allowed = Array.isArray(where.law_source) ? where.law_source : [where.law_source];
+            rows = rows.filter(r => allowed.includes(JSON.parse(r.metadata).law_source));
+        }
 
         if (!rows.length) {
             return { ids: [[]], distances: [[]], metadatas: [[]] };
