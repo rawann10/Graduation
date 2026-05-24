@@ -1,5 +1,5 @@
 // API — same origin as this page (Express serves frontend + API)
-function getAPIURL() {
+function getAPIURL() { 
     return `${window.location.origin}/api`;
 }
 
