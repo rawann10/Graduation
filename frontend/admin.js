@@ -772,4 +772,3 @@ document.addEventListener('keydown', (e) => {
         closeDocumentModal();
     }
 });
-
