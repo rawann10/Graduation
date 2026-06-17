@@ -1,5 +1,11 @@
 function getAPIURL() {
-    return `${window.location.origin}/api`;
+    // If running locally, point to your local backend port (e.g., 5000)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:5000/api'; 
+    }
+    
+    // In production, point directly to your deployed backend API URL
+    return 'https://lawgic-11.netlify.app/'; 
 }
 
 const tabActive = 'flex-1 py-3 text-sm font-semibold rounded-lg bg-white dark:bg-slate-700 text-navy dark:text-white shadow-sm';
