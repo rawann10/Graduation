@@ -1,8 +1,6 @@
 function getAPIURL() {
-    // If running locally, point to your local backend port (e.g., 5000)
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:5000/api'; 
-    }
+    return `${window.location.origin}/api`;
+}
     
     // In production, point directly to your deployed backend API URL
     return 'https://lawgic-11.netlify.app/'; 
